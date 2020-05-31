@@ -3,6 +3,7 @@ package com.codingwithmitch.openapi.ui.auth
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
@@ -11,8 +12,10 @@ import androidx.navigation.findNavController
 import com.codingwithmitch.openapi.R
 import com.codingwithmitch.openapi.ui.BaseActivity
 import com.codingwithmitch.openapi.ui.ResponseType
+import com.codingwithmitch.openapi.ui.auth.state.AuthStateEvent
 import com.codingwithmitch.openapi.ui.main.MainActivity
 import com.codingwithmitch.openapi.viewmodels.ViewModelProviderFactory
+import kotlinx.android.synthetic.main.activity_auth.*
 import javax.inject.Inject
 
 class AuthActivity : BaseActivity(), NavController.OnDestinationChangedListener {
@@ -28,35 +31,19 @@ class AuthActivity : BaseActivity(), NavController.OnDestinationChangedListener 
         viewModel = ViewModelProvider(this, providerFactory).get(AuthViewModel::class.java)
         findNavController(R.id.auth_nav_host_fragment).addOnDestinationChangedListener(this)
         subscribeObserver()
+        checkPreviousAuthUser()
     }
 
     fun subscribeObserver(){
 
         viewModel.dataState.observe(this, Observer {dataState ->
+            onDataStateChange(dataState)
             dataState.data?.let { data ->
                 data.data?.let {event ->
                     event.getContentIfNotHandled()?.let {
                         it.authToken?.let {
                             Log.d(TAG, "AuthActivity, DataState: $it")
                             viewModel.setAuthToken(it)
-                        }
-                    }
-                }
-                data.response?.let {event ->
-                    event.getContentIfNotHandled()?.let {
-                        when(it.responseType){
-
-                            is ResponseType.Dialog -> {
-                                // inflate dialog
-                            }
-
-                            is ResponseType.Toast -> {
-                                //  show toast
-                            }
-
-                            is ResponseType.None -> {
-                                Log.d(TAG, "AuthActivity: Response: ${it.message}")
-                            }
                         }
                     }
                 }
@@ -88,5 +75,17 @@ class AuthActivity : BaseActivity(), NavController.OnDestinationChangedListener 
         arguments: Bundle?
     ) {
         viewModel.cancelActiveJobs()
+    }
+
+    fun checkPreviousAuthUser(){
+        viewModel.setStateEvent(AuthStateEvent.CheckPreviousAuthEvent())
+    }
+
+    override fun displayProgressBar(bool: Boolean) {
+        if (bool){
+            progress_bar.visibility = View.VISIBLE
+        } else {
+            progress_bar.visibility = View.INVISIBLE
+        }
     }
 }

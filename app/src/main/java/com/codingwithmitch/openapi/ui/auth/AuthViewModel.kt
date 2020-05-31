@@ -1,5 +1,6 @@
 package com.codingwithmitch.openapi.ui.auth
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.codingwithmitch.openapi.models.AuthToken
 import com.codingwithmitch.openapi.repository.auth.AuthRepository
@@ -27,6 +28,7 @@ constructor(
     override fun handleStateEvent(stateEvent: AuthStateEvent): LiveData<DataState<AuthViewState>> {
         when (stateEvent) {
             is LoginAttemptEvent -> {
+                Log.d(TAG, "handleStateEvent: called")
                 return authRepository.attemptLogin(
                     stateEvent.email,
                     stateEvent.password
@@ -43,7 +45,7 @@ constructor(
             }
 
             is CheckPreviousAuthEvent -> {
-                return AbsentLiveData.create()
+                return authRepository.checkPreviousAuthUser()
             }
         }
     }
